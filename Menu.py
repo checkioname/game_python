@@ -78,10 +78,11 @@ class PygameMenu:
                             # Call a function to start the game
                         elif self.selected_option == 1:  # Level
                             # Call a function to go to the level selection
-                            pass
+                            menu_active = False
                         elif self.selected_option == 2:  # Options
                             # Call a function to open the options menu
-                            pass
+                            menu_active = False
+
 
             self.draw_menu()
             pygame.display.flip()
