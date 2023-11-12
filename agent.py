@@ -38,7 +38,7 @@ class AIPlayer(Sprites):
         self.target_update_freq = 100  # Update target network every 100 steps
 
         #load train weights
-        #checkpoint = torch.load('runs/ml-model-test-117/model.pt')
+        #checkpoint = torch.load('runs/ml-model-test-118/model.pt')
         #self.q_network.load_state_dict(checkpoint['model_state_dict'])
         #self.target_q_network.load_state_dict(checkpoint['model_state_dict'])
 
