@@ -13,7 +13,7 @@ import os
 from torch.utils.tensorboard import SummaryWriter
 
 class Game:
-    def __init__(self):
+    def __init__(self, score, hi_score):
         self.test_font = pygame.font.Font("font/8-BIT_WONDER.TTF", 25)
         self.SCREEN_WIDTH = 1100
         self.SCREEN_HEIGHT = 600
@@ -48,15 +48,18 @@ class Game:
         self.agent = AIPlayer(400,520,'sprites/ai_player', 0.05, 0, state_size=7, action_size=2)
         self.moving_ai.add(self.agent)
 
-        #self.moving_bomb = pygame.sprite.Group()
-        #self.bomb = Sprites(randint(600, 1000), 500, 'sprites/bomb', 0.0, 5)
-        #self.moving_bomb.add(self.bomb)
+
+        self.moving_bomb = pygame.sprite.Group()
+        self.bomb = Sprites(randint(10000, 30000), 500, 'sprites/bomb', 0.0, 5)
+        self.moving_bomb.add(self.bomb)
+
+
 
 
 
         # Pontuação do jogo
-        self.score = 0  
-        self.hi_score = 0
+        self.score = score  
+        self.hi_score = hi_score
         
         self.scroll = 0
         self.background = Background(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, self.screen)
@@ -81,18 +84,21 @@ class Game:
 
 
     def draw_game_elements(self):
-        #self.moving_sprites.draw(self.screen)
-        #self.moving_sprites.update()
+        self.moving_sprites.draw(self.screen)
+        self.moving_sprites.update()
         self.moving_coin.draw(self.screen)
         self.moving_coin.update()
         self.moving_wave.draw(self.screen)
         self.moving_wave.update()
         self.moving_shark.draw(self.screen)
         self.moving_shark.update()
-        self.moving_ai.draw(self.screen)
-        self.moving_ai.update()
-        #self.moving_bomb.draw(self.screen)
-        #self.moving_bomb.update()
+        if self.agent is not None:
+            self.moving_ai.draw(self.screen)
+            self.moving_ai.update()
+        
+        self.moving_bomb.draw(self.screen)
+        self.moving_bomb.update()
+
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -103,14 +109,37 @@ class Game:
                 if event.key == pygame.K_SPACE:
                     self.player.is_jumping = True
 
+    def get_state(self):
+        #altura do obstaculo
+        #comprimento do obstaculo
+        #distancia do obstaculo
+        #altura da ia
+        #comprimento da ia
+        #distancia da moeda
+        #altura da moeda
+        #comprimento da moeda
+        #esta pulando
+        distancia_max = 1000
 
-    def step(self,action):
+        distance_normalized = (self.agent.rect[0] - self.shark.rect[0]) / distancia_max
+
+        is_jumping = None
+        if self.agent.is_jumping:
+            is_jumping = 1
+        else:
+            is_jumping = 0
+        return [self.shark.rect[0], (self.agent.rect[0] - self.shark.rect[0]), self.agent.rect[0], is_jumping]
+
+
+
+    def step(self):
         self.scroll += 4
         self.background.draw_bg(self.scroll)
         self.background.draw_ground(self.scroll)
         self.draw_game_elements()
         self.handle_events()
         self.render_scores()
+
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -123,58 +152,90 @@ class Game:
         if self.player.is_jumping:
             self.player.jump()
 
+            
+
+
         self.score += 0.02  # Increment the score over time
+        action = 0 
+        if self.agent is not None:
+            distancia_max = 1000
+            distancia_normalizada = (self.agent.rect[0] - self.shark.rect[0]) / distancia_max
+
+            is_jumping = None
+            if self.agent.is_jumping:
+                is_jumping = 1
+            else:
+                is_jumping = 0
+            
+            state = [self.shark.rect[0], (self.agent.rect[0] - self.shark.rect[0]), self.agent.rect[0], is_jumping]
+            action = self.agent.select_action(state)
+            print(f'VALOR DA ACAO {action}')
+
+        if action == 1:
+            self.agent.is_jumping = True
+            
+        if self.agent is not None and self.agent.is_jumping:
+            self.agent.jump()
+            action = 0
 
 
-        #action = self.agent.select_action([self.shark.rect[1],self.shark.rect[1], (self.agent.rect[0] - self.shark.rect[0]), self.agent.rect[1], self.agent.rect[1]])
-        #self.bomb.is_jumping = True
-        #self.bomb.jump()
+        
+        self.bomb.is_jumping = True
+        self.bomb.jump()
 
 
         # Change bomb sprite
-        #if self.bomb.rect.x <= 650:
-        #    self.bomb.inc = 0.12
-        #else:
-        #    self.bomb.current_sprite = 0.0
+        if self.bomb.rect.x <= 650:
+            self.bomb.inc = 0.12
+        else:
+            self.bomb.current_sprite = 0.0
         
         ## Check if player collides with the bomb
-        #if self.player.rect.colliderect(self.bomb):
-        #    self.bomb.rect.x = randint(1000, 3000)  
-        #    self.bomb.inc = 0
-
-        # Perform AI action
-        if action == 1:
-            self.agent.is_jumping = True
-
-        # Handle jumping for Player 1
-
-
-        if self.agent.is_jumping:
-            self.agent.jump()
+        if self.player.rect.colliderect(self.bomb):
+            self.bomb.rect.x = randint(3000, 4000)  
+            self.bomb.inc = 0
+    
         
 
         # Check if the player collides with the coin
-        if self.agent.rect.colliderect(self.coin) or self.coin.rect.colliderect(self.agent):
+        if self.agent is not None:
+            if self.agent.rect.colliderect(self.coin) or self.coin.rect.colliderect(self.agent):
+                self.score += 10  # Increase the score when the player collects a coin
+                # Move the coin to a new position
+                hit = pygame.mixer.Sound("sounds/Pickup Coin3.wav")
+                hit.play()
+                self.coin.rect.x = randint(1000, 3000)  
+                self.coin.rect.y = randint(350,500)
+        
+        if self.player.rect.colliderect(self.coin):
             self.score += 10  # Increase the score when the player collects a coin
             # Move the coin to a new position
+            hit = pygame.mixer.Sound("sounds/Pickup Coin3.wav")
+            hit.play()
             self.coin.rect.x = randint(1000, 3000)  
             self.coin.rect.y = randint(350,500)
 
 
         # Check for collisions with the shark and update the score accordingly
-        if (
-            pygame.sprite.spritecollide(self.agent, self.moving_shark, False, pygame.sprite.collide_mask)
-            or pygame.sprite.spritecollide(self.shark, self.moving_ai, False, pygame.sprite.collide_mask)
-        ):
+        if self.agent is not None:
+            if (
+                pygame.sprite.spritecollide(self.agent, self.moving_shark, False, pygame.sprite.collide_mask)
+                or pygame.sprite.spritecollide(self.shark, self.moving_ai, False, pygame.sprite.collide_mask)
+            ):
+                self.shark.rect.x = randint(1000, 1400)  # Move the shark to a new position
+                self.agent = None
+
+        if self.shark.rect.x <= -150:
             self.shark.rect.x = randint(1000, 1400)  # Move the shark to a new position
-            
-        if self.shark.rect.x <= -850:
-            self.shark.rect.x = randint(1000, 1400)  # Move the shark to a new position
 
-            #self.gameOver = GameOver(self.screen,self.score,self.hi_score)   
-            #gameOver.run()
+        
+        if (pygame.sprite.spritecollide(self.player, self.moving_shark, False, pygame.sprite.collide_mask)):
+            if self.agent is None:
+                print("FIM DE JOGO!")
+                return 0, self.score, self.hi_score
 
-
+        pygame.display.update()
+        return 1, self.score,self.hi_score
         #return self.get_state(), self.calculate_reward(), self.is_game_over()
 
 
@@ -205,10 +266,10 @@ class Game:
         self.background.draw_ground(self.scroll)
         self.render_scores
 
-
-        self.agent = AIPlayer(400,520,'sprites/ai_player', 0.05,0, state_size=4, action_size=2)
-        self.moving_ai = pygame.sprite.Group()
-        self.moving_ai.add(self.agent)
+        if self.agent is not None:
+            self.agent = AIPlayer(400,520,'sprites/ai_player', 0.05,0, state_size=4, action_size=2)
+            self.moving_ai = pygame.sprite.Group()
+            self.moving_ai.add(self.agent)
         
         self.moving_wave = pygame.sprite.Group()
         self.wave = Sprites(-9, 320, 'sprites/WAVE', 0.05, 0)
@@ -224,30 +285,6 @@ class Game:
         self.shark = Sprites(1400, 430, 'sprites/shark', 0.15, 10)
         self.moving_shark.add(self.shark)
 
-
-
-    def get_state(self):
-        #altura do obstaculo
-        #comprimento do obstaculo
-        #distancia do obstaculo
-        #altura da ia
-        #comprimento da ia
-        #distancia da moeda
-        #altura da moeda
-        #comprimento da moeda
-        #esta pulando
-        distancia_max = 1000
-
-        distance_normalized = (self.agent.rect[0] - self.shark.rect[0]) / distancia_max
-
-        is_jumping = None
-        if self.agent.is_jumping:
-            is_jumping = 1
-        else:
-            is_jumping = 0
-        return [self.shark.rect[0], (self.agent.rect[0] - self.shark.rect[0]), self.agent.rect[0], is_jumping]
-
-
     
     def calc_reward(self):
         reward = 0.0
@@ -256,6 +293,10 @@ class Game:
         #if self.agent.rect[0] - self.shark.rect[0] < -290 and self.agent.is_jumping == False:
             #    print('recompensando por nao pular longe')
         #    reward = 0.2
+        
+        if self.agent.rect.colliderect(self.shark) == False:
+            print('recompensando por nao colidir')
+            reward = 1.0
 
         if self.agent.rect.colliderect(self.shark):
             print('punindo por colidir')
@@ -327,8 +368,9 @@ class Game:
 
 if __name__ == "__main__":
     pygame.init()
-    game = Game()
+    game = Game(0,0)
 
-    n = int(input('numero de partidas: '))
-    game.train(n)
-
+    #n = int(input('numero de partidas: '))
+    while True:
+        game.step()
+    #game.run()

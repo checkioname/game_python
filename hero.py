@@ -10,9 +10,9 @@ class Player(Sprites):
         self.is_jumping = False
         self.jump_vel = 8.5
         self.jump_sprites = []
+        self.jump_sprites.append(pygame.image.load('sprites/hero/jump/image_4.png'))
         self.jump_sprites.append(pygame.image.load('sprites/hero/jump/image_5.png'))
-        self.jump_sprites.append(pygame.image.load('sprites/hero/jump/image_6.png'))
-
+        
     def jump(self):
         if self.is_jumping:
             self.image = self.jump_sprites[0]
