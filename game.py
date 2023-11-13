@@ -182,13 +182,7 @@ class Game:
             self.bomb.inc = 0.12
         else:
             self.bomb.current_sprite = 0.0
-        
-        ## Check if player collides with the bomb
-        if self.player.rect.colliderect(self.bomb):
-            self.bomb.rect.x = randint(3000, 4000)  
-            self.bomb.inc = 0
-    
-        
+
 
         # Check if the player collides with the coin
         if self.two_players and self.agent is not None:
@@ -209,6 +203,13 @@ class Game:
             self.coin.rect.y = randint(350,500)
 
 
+        if self.two_players and self.agent is not None:
+            if self.agent.rect.colliderect(self.bomb):
+                self.two_players = False
+        
+        
+
+
         # Check for collisions with the shark and update the score accordingly
         if self.two_players and self.agent is not None:
             if (
@@ -220,6 +221,11 @@ class Game:
 
         if self.shark.rect.x <= -150:
             self.shark.rect.x = randint(1000, 1400)  # Move the shark to a new position
+
+        if self.player.rect.colliderect(self.bomb):
+            if self.two_players == False:
+                print("FIM DE JOGO!")
+                return 0, self.score, self.hi_score
 
         
         if (pygame.sprite.spritecollide(self.player, self.moving_shark, False, pygame.sprite.collide_mask)):
