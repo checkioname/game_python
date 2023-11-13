@@ -59,7 +59,7 @@ class Game:
         self.scroll = 0
         self.background = Background(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, self.screen)
 
-        self.action = 0
+        self.two_players = True
         
     
 
@@ -76,7 +76,7 @@ class Game:
         self.moving_wave.update()
         self.moving_shark.draw(self.screen)
         self.moving_shark.update()
-        if self.agent is not None:
+        if self.two_players:
             self.moving_ai.draw(self.screen)
             self.moving_ai.update()
         
@@ -148,7 +148,7 @@ class Game:
         action = None 
 
 
-        if self.agent is not None:
+        if self.two_players and self.agent is not None:
             distancia_max = 1000
             distancia_normalizada = (self.agent.rect[0] - self.shark.rect[0]) / distancia_max
 
@@ -166,9 +166,10 @@ class Game:
         if action == 1:
             self.agent.is_jumping = True
             
-        if self.agent is not None and self.agent.is_jumping:
-            self.agent.jump()
-            action = 0
+        if self.two_players and self.agent is not None:
+            if  self.agent.is_jumping:
+                self.agent.jump()
+                action = 0
 
 
         
@@ -190,7 +191,7 @@ class Game:
         
 
         # Check if the player collides with the coin
-        if self.agent is not None:
+        if self.two_players and self.agent is not None:
             if self.agent.rect.colliderect(self.coin) or self.coin.rect.colliderect(self.agent):
                 self.score += 10  # Increase the score when the player collects a coin
                 # Move the coin to a new position
@@ -209,20 +210,20 @@ class Game:
 
 
         # Check for collisions with the shark and update the score accordingly
-        if self.agent is not None:
+        if self.two_players and self.agent is not None:
             if (
                 pygame.sprite.spritecollide(self.agent, self.moving_shark, False, pygame.sprite.collide_mask)
                 or pygame.sprite.spritecollide(self.shark, self.moving_ai, False, pygame.sprite.collide_mask)
             ):
                 self.shark.rect.x = randint(1000, 1400)  # Move the shark to a new position
-                self.agent = None
+                self.two_players = False
 
         if self.shark.rect.x <= -150:
             self.shark.rect.x = randint(1000, 1400)  # Move the shark to a new position
 
         
         if (pygame.sprite.spritecollide(self.player, self.moving_shark, False, pygame.sprite.collide_mask)):
-            if self.agent is None:
+            if self.two_players == False:
                 print("FIM DE JOGO!")
                 return 0, self.score, self.hi_score
 
