@@ -50,7 +50,7 @@ class Game:
 
 
         self.moving_bomb = pygame.sprite.Group()
-        self.bomb = Sprites(randint(10000, 30000), 500, 'sprites/bomb', 0.0, 5)
+        self.bomb = Sprites(randint(10000, 40000), 500, 'sprites/bomb', 0.0, 5)
         self.moving_bomb.add(self.bomb)
         # Pontuação do jogo
         self.score = score  
@@ -283,6 +283,10 @@ class Game:
         self.moving_shark = pygame.sprite.Group()
         self.shark = Sprites(1400, 430, 'sprites/shark', 0.15, 10)
         self.moving_shark.add(self.shark)
+
+        self.moving_bomb = pygame.sprite.Group()
+        self.bomb = Sprites(randint(10000, 40000), 500, 'sprites/bomb', 0.0, 5)
+        self.moving_bomb.add(self.bomb)
 
     
     def calc_reward(self):
