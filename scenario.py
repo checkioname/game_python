@@ -35,3 +35,6 @@ class Background:
             x += 1
 
     #def draw_platform(self,scroll)
+
+
+    

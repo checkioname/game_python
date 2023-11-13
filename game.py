@@ -52,36 +52,20 @@ class Game:
         self.moving_bomb = pygame.sprite.Group()
         self.bomb = Sprites(randint(10000, 30000), 500, 'sprites/bomb', 0.0, 5)
         self.moving_bomb.add(self.bomb)
-
-
-
-
-
         # Pontuação do jogo
         self.score = score  
         self.hi_score = hi_score
         
         self.scroll = 0
         self.background = Background(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, self.screen)
+
+        self.two_players = True
         
     
 
     ####################################
     #           METODOS DO JOGO        #
     ####################################
-
-
-    def run(self):
-        while True:
-            self.scroll += 4
-            self.background.draw_bg(self.scroll)
-            self.background.draw_ground(self.scroll)
-            self.draw_game_elements()
-            self.handle_events()
-            self.step()
-            self.render_scores()
-            pygame.display.update()
-
 
     def draw_game_elements(self):
         self.moving_sprites.draw(self.screen)
@@ -92,7 +76,7 @@ class Game:
         self.moving_wave.update()
         self.moving_shark.draw(self.screen)
         self.moving_shark.update()
-        if self.agent is not None:
+        if self.two_players:
             self.moving_ai.draw(self.screen)
             self.moving_ai.update()
         
@@ -153,11 +137,18 @@ class Game:
             self.player.jump()
 
             
-
+        if self.score > 300:
+            self.shark.run_speed = 12
+        if self.score > 500: 
+            self.shark.run_speed = 14
+        if self.score >800:
+            self.shark.run_speed = 16
 
         self.score += 0.02  # Increment the score over time
-        action = 0 
-        if self.agent is not None:
+        action = None 
+
+
+        if self.two_players and self.agent is not None:
             distancia_max = 1000
             distancia_normalizada = (self.agent.rect[0] - self.shark.rect[0]) / distancia_max
 
@@ -169,14 +160,16 @@ class Game:
             
             state = [self.shark.rect[0], (self.agent.rect[0] - self.shark.rect[0]), self.agent.rect[0], is_jumping]
             action = self.agent.select_action(state)
+            self.action = action
             print(f'VALOR DA ACAO {action}')
 
         if action == 1:
             self.agent.is_jumping = True
             
-        if self.agent is not None and self.agent.is_jumping:
-            self.agent.jump()
-            action = 0
+        if self.two_players and self.agent is not None:
+            if  self.agent.is_jumping:
+                self.agent.jump()
+                action = 0
 
 
         
@@ -198,7 +191,7 @@ class Game:
         
 
         # Check if the player collides with the coin
-        if self.agent is not None:
+        if self.two_players and self.agent is not None:
             if self.agent.rect.colliderect(self.coin) or self.coin.rect.colliderect(self.agent):
                 self.score += 10  # Increase the score when the player collects a coin
                 # Move the coin to a new position
@@ -217,20 +210,20 @@ class Game:
 
 
         # Check for collisions with the shark and update the score accordingly
-        if self.agent is not None:
+        if self.two_players and self.agent is not None:
             if (
                 pygame.sprite.spritecollide(self.agent, self.moving_shark, False, pygame.sprite.collide_mask)
                 or pygame.sprite.spritecollide(self.shark, self.moving_ai, False, pygame.sprite.collide_mask)
             ):
                 self.shark.rect.x = randint(1000, 1400)  # Move the shark to a new position
-                self.agent = None
+                self.two_players = False
 
         if self.shark.rect.x <= -150:
             self.shark.rect.x = randint(1000, 1400)  # Move the shark to a new position
 
         
         if (pygame.sprite.spritecollide(self.player, self.moving_shark, False, pygame.sprite.collide_mask)):
-            if self.agent is None:
+            if self.two_players == False:
                 print("FIM DE JOGO!")
                 return 0, self.score, self.hi_score
 
