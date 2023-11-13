@@ -52,36 +52,20 @@ class Game:
         self.moving_bomb = pygame.sprite.Group()
         self.bomb = Sprites(randint(10000, 30000), 500, 'sprites/bomb', 0.0, 5)
         self.moving_bomb.add(self.bomb)
-
-
-
-
-
         # Pontuação do jogo
         self.score = score  
         self.hi_score = hi_score
         
         self.scroll = 0
         self.background = Background(self.SCREEN_WIDTH, self.SCREEN_HEIGHT, self.screen)
+
+        self.action = 0
         
     
 
     ####################################
     #           METODOS DO JOGO        #
     ####################################
-
-
-    def run(self):
-        while True:
-            self.scroll += 4
-            self.background.draw_bg(self.scroll)
-            self.background.draw_ground(self.scroll)
-            self.draw_game_elements()
-            self.handle_events()
-            self.step()
-            self.render_scores()
-            pygame.display.update()
-
 
     def draw_game_elements(self):
         self.moving_sprites.draw(self.screen)
@@ -153,10 +137,17 @@ class Game:
             self.player.jump()
 
             
-
+        if self.score > 300:
+            self.shark.run_speed = 12
+        if self.score > 500: 
+            self.shark.run_speed = 14
+        if self.score >800:
+            self.shark.run_speed = 16
 
         self.score += 0.02  # Increment the score over time
-        action = 0 
+        action = None 
+
+
         if self.agent is not None:
             distancia_max = 1000
             distancia_normalizada = (self.agent.rect[0] - self.shark.rect[0]) / distancia_max
@@ -169,6 +160,7 @@ class Game:
             
             state = [self.shark.rect[0], (self.agent.rect[0] - self.shark.rect[0]), self.agent.rect[0], is_jumping]
             action = self.agent.select_action(state)
+            self.action = action
             print(f'VALOR DA ACAO {action}')
 
         if action == 1:

@@ -33,11 +33,9 @@ return_to_menu_duration = 2  # Set the duration in seconds
 
 
 # musica
-# Musica do jogo
 pygame.mixer.music.load("sounds/8-bit-game-music-122259.mp3")
 pygame.mixer.music.set_volume(0.5)
-# Start playing the background music (use -1 to loop indefinitely)
-
+ 
 # Game loop
 run = True
 while run:
@@ -75,19 +73,19 @@ while run:
             in_game_one_player = False
 
     elif in_game_two_player:
-        game.agent = AIPlayer(400,520,'sprites/ai_player', 0.05, 0, state_size=7, action_size=2)
+        game.agent = AIPlayer(400,520,'sprites/ai_player', 0.05, 0, state_size=4, action_size=2)
         while True:
             done, score, hi_score = game.step()
             if done == 0:
+                pygame.display.flip()
                 if game.score > game.hi_score:
                     game.hi_score = game.score
                 pygame.mixer.music.stop()
-                game.agent = AIPlayer(400,520,'sprites/ai_player', 0.05, 0, state_size=7, action_size=2)
+                #game.agent = AIPlayer(400,520,'sprites/ai_player', 0.05, 0, state_size=7, action_size=2)
                 game.reset()
                 break
         for i in range(100):
             #atualiza a tela e mostra game over por alguns segundos
-            pygame.display.flip()
             game_over.draw_game_over_screen(score,hi_score)
             game_over.high_score = game.hi_score
 
